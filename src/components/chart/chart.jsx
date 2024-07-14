@@ -1,33 +1,34 @@
 import React, { useRef, useEffect, useState } from "react";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import axios from "axios";
-export default ({ ticker, timeFrame }) => {
+export default () => {
   const chartContainerRef = useRef();
   const chartInstance = useRef(null);
+  const [ticker, setTicker] = useState("btcusdt");
+  const [inputTicker, setInputTicker] = useState(ticker);
+  const [timeFrame, setTimeFrame] = useState("1m");
   const [ohlcData, setOhlcData] = useState([]);
-  //   const [showohlcData, setShowOhlcData] = useState([]);
-  //   const [count, setCount] = useState(0);
+  const [showohlcData, setShowOhlcData] = useState([]);
+  const [playing, setPlaying] = useState(false);
+  const [count, setCount] = useState(0);
   const get1mCloseData = async () => {
     const { data } = await axios.get(
-      "http://localhost:3000/users/get-1m-close?exchange=binance&pair=btcusdt"
+      `https://fapi.binance.com/fapi/v1/klines?symbol=${ticker}&interval=${timeFrame}&limit=1500`
     );
 
-    const ohlc = data.data.map((d) => {
-      let z = d.message.k;
-      return {
-        time: Number(z.t / 1000),
-        open: Number(z.o),
-        high: Number(z.h),
-        low: Number(z.l),
-        close: Number(z.c),
-      };
-    });
+    const ohlc = data.map((item) => ({
+      time: Number(item[0] / 1000),
+      open: Number(item[1]),
+      high: Number(item[2]),
+      low: Number(item[3]),
+      close: Number(item[4]),
+    }));
     setOhlcData(ohlc);
   };
 
   useEffect(() => {
     get1mCloseData();
-  }, []);
+  }, [timeFrame, ticker]);
   useEffect(() => {
     if (!chartInstance || !chartInstance.current) {
       chartInstance.current = createChart(chartContainerRef.current, {
@@ -54,7 +55,7 @@ export default ({ ticker, timeFrame }) => {
     }
 
     const candleSeries = chartInstance.current.addCandlestickSeries();
-    candleSeries.setData(ohlcData);
+    candleSeries.setData(showohlcData);
 
     return () => {
       if (chartInstance && chartInstance.current) {
@@ -63,14 +64,60 @@ export default ({ ticker, timeFrame }) => {
         // candleSeries.setData([]);
       }
     };
-  }, [ohlcData, ticker, timeFrame]);
-  //   }, [showohlcData, ticker, timeFrame]);
-  //   useEffect(() => {
-  //     let arrayToShow = ohlcData.slice(0, count);
-  //     setShowOhlcData(arrayToShow);
-  //   }, [ohlcData, count]);
+  }, [showohlcData, ticker, timeFrame]);
+  useEffect(() => {
+    let arrayToShow = ohlcData.slice(0, count);
+    setShowOhlcData(arrayToShow);
+  }, [ohlcData, ticker, count]);
+  useEffect(() => {
+    let interval;
+    if (playing) {
+      interval = setInterval(() => {
+        setCount((prevCount) => prevCount + 1);
+      }, 1000);
+    } else if (!playing && interval) {
+      clearInterval(interval);
+    }
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [playing]);
   return (
     <>
+      <div
+        style={{
+          width: "800px",
+          display: "flex",
+          justifyContent: "space-between",
+        }}
+      >
+        <div>
+          <button onClick={() => setTimeFrame("1m")}>1m</button>
+          <button onClick={() => setTimeFrame("3m")}>3m</button>
+          <button onClick={() => setTimeFrame("5m")}>5m</button>
+          <button onClick={() => setTimeFrame("15m")}>15m</button>
+          <button onClick={() => setTimeFrame("30m")}>30m</button>
+          <button onClick={() => setTimeFrame("1h")}>1h</button>
+          <button onClick={() => setTimeFrame("4h")}>4h</button>
+          <button onClick={() => setTimeFrame("1d")}>1d</button>
+          <button onClick={() => setTimeFrame("1w")}>1w</button>
+          <button onClick={() => setTimeFrame("1M")}>1M</button>
+        </div>
+        <div>
+          <input
+            value={inputTicker}
+            onChange={(e) => setInputTicker(e.target.value)}
+          />
+          <button onClick={() => setTicker(inputTicker)}>Submit</button>
+        </div>
+        <div>
+          <button onClick={() => setCount(count - 1)}>Prev</button>
+          <button onClick={() => setPlaying((prev) => !prev)}>
+            {playing ? "Stop" : "Play"}
+          </button>
+          <button onClick={() => setCount(count + 1)}>Next</button>
+        </div>
+      </div>
+
       <div ref={chartContainerRef} style={{ border: "0.5px solid grey" }} />
     </>
   );
