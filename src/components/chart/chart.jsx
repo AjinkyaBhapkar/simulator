@@ -1,12 +1,12 @@
 import React, { useRef, useEffect, useState } from "react";
 import { createChart, CrosshairMode } from "lightweight-charts";
 import axios from "axios";
-export const Chart = ({ ticker, timeFrame }) => {
+export default ({ ticker, timeFrame }) => {
   const chartContainerRef = useRef();
   const chartInstance = useRef(null);
   const [ohlcData, setOhlcData] = useState([]);
-  const [showohlcData, setShowOhlcData] = useState([]);
-  const [count, setCount] = useState(0);
+  //   const [showohlcData, setShowOhlcData] = useState([]);
+  //   const [count, setCount] = useState(0);
   const get1mCloseData = async () => {
     const { data } = await axios.get(
       "http://localhost:3000/users/get-1m-close?exchange=binance&pair=btcusdt"
@@ -63,15 +63,15 @@ export const Chart = ({ ticker, timeFrame }) => {
         // candleSeries.setData([]);
       }
     };
-  }, [showohlcData, ticker, timeFrame]);
-  useEffect(() => {
-    let arrayToShow = ohlcData.slice(0, count);
-    setShowOhlcData(arrayToShow);
-  }, [ohlcData, count]);
+  }, [ohlcData, ticker, timeFrame]);
+  //   }, [showohlcData, ticker, timeFrame]);
+  //   useEffect(() => {
+  //     let arrayToShow = ohlcData.slice(0, count);
+  //     setShowOhlcData(arrayToShow);
+  //   }, [ohlcData, count]);
   return (
     <>
-      <div ref={chartContainerRef} style={{ width: "100%", height: "100%" }} />
-      <button onClick={() => setCount(count + 1)}>{count}</button>
+      <div ref={chartContainerRef} style={{ border: "0.5px solid grey" }} />
     </>
   );
 };
