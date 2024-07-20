@@ -6,11 +6,12 @@ import {
   Link,
   Routes,
 } from "react-router-dom";
+import Homepage from "./views/Chart/Homepage";
 function App() {
   return (
     <Router>
       <Routes>
-        <Route exact path="/" element={<div className="App">HomePage</div>} />
+        <Route exact path="/" element={<Homepage />} />
         <Route path="/chart" element={<Chart />} />
       </Routes>
     </Router>
